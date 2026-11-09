@@ -27,4 +27,4 @@ Depois acesse http://localhost:8000.
 ## Observações
 
 - As fontes (Oswald e Nunito) são carregadas do Google Fonts.
-- As imagens mostram crianças e adolescentes do CCA. Mantenha o repositório privado, ou confirme a autorização de uso de imagem, antes de torná-lo público.
+- As imagens do site foram geradas por inteligência artificial e não retratam crianças reais.
