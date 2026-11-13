@@ -216,7 +216,7 @@ p{margin:0}
       </div>
       <p style="color: #4b5275; font-size: 17px; max-width: 30em;">Meio minuto da nossa rotina. Toque no vídeo para ligar o som.</p>
     </div>
-    <video src="video/cca.mp4" poster="img/video-capa.jpg" autoplay="" muted="" loop="" playsinline="" controls="" preload="metadata" aria-label="Vídeo de apresentação do CCA Amigos da Vitória: atividades, horários, ECA e contatos" style="display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 28px; background: #0b1250; box-shadow: 0 0 0 6px #ffc61a, 0 24px 60px rgba(11,18,80,0.25);"></video>
+    <div style="position: relative;"><video src="video/cca.mp4" poster="img/video-capa.jpg" autoplay="" muted="" loop="" playsinline="" controls="" preload="metadata" aria-label="Vídeo de apresentação do CCA Amigos da Vitória: atividades, horários, ECA e contatos" style="display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 28px; background: #0b1250; box-shadow: 0 0 0 6px #ffc61a, 0 24px 60px rgba(11,18,80,0.25);"></video><button id="cca-som" type="button" hidden style="position:absolute;left:18px;bottom:18px;display:inline-flex;align-items:center;gap:10px;padding:12px 20px;border:0;border-radius:999px;background:#ffc61a;color:#0b1250;font:800 16px Nunito,system-ui,sans-serif;cursor:pointer;box-shadow:0 8px 20px rgba(0,0,0,.3)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H2v6h4l5 4z"></path><path d="M15.5 8.5a5 5 0 0 1 0 7"></path><path d="M19 5a10 10 0 0 1 0 14"></path></svg>Ativar som</button></div>
   </section>
 
   <section id="quem-somos" style="max-width: 1100px; margin: 0 auto; padding: 56px 20px 72px; display: flex; flex-wrap: wrap; gap: 40px; align-items: flex-start;" class="m-sec">
@@ -431,6 +431,59 @@ p{margin:0}
     </div>
   </footer>
 </div>
+<script>
+(function () {
+  var v = document.querySelector('#video video');
+  var btn = document.getElementById('cca-som');
+  if (!v || !btn || !('IntersectionObserver' in window)) return;
+  v.removeAttribute('autoplay');
+  v.autoplay = false;
+  var visivel = false;      // vídeo pelo menos metade na tela
+  var mutadoPeloUsuario = false;
+  var esperado = true;      // o último valor de "muted" que este código definiu
+  function mutar(m) { esperado = m; v.muted = m; }
+  function tocar() {
+    mutar(mutadoPeloUsuario);
+    var p = v.play();
+    if (p && p.then) {
+      p.then(function () { btn.hidden = !v.muted || mutadoPeloUsuario; })
+       .catch(function () {
+         // Navegador bloqueou som sem interação: toca mudo e mostra o botão
+         mutar(true);
+         v.play().catch(function () {});
+         btn.hidden = mutadoPeloUsuario;
+       });
+    }
+  }
+  function parar() { mutar(true); v.pause(); btn.hidden = true; }
+  new IntersectionObserver(function (itens) {
+    itens.forEach(function (it) {
+      var agora = it.isIntersecting && it.intersectionRatio >= 0.5;
+      if (agora === visivel) return;
+      visivel = agora;
+      if (visivel && !document.hidden) tocar(); else parar();
+    });
+  }, { threshold: [0, 0.5, 1] }).observe(v);
+  // Primeiro toque/clique/tecla em qualquer lugar libera o som
+  function liberar() {
+    if (visivel && v.muted && !mutadoPeloUsuario) { mutar(false); v.play().catch(function () {}); btn.hidden = true; }
+  }
+  ['pointerdown', 'keydown', 'touchstart'].forEach(function (ev) {
+    document.addEventListener(ev, liberar, { passive: true });
+  });
+  btn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    mutadoPeloUsuario = false; mutar(false); v.play().catch(function () {}); btn.hidden = true;
+  });
+  // Se a pessoa silenciar ou ligar o som pelos controles, respeita a escolha
+  v.addEventListener('volumechange', function () {
+    if (v.muted !== esperado) { mutadoPeloUsuario = v.muted; esperado = v.muted; btn.hidden = true; }
+  });
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) parar(); else if (visivel) tocar();
+  });
+})();
+</script>
 <script data-goatcounter="https://ccaamigosdavitoria.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </body>
 </html>
